@@ -1,0 +1,6 @@
+
+custom particle effect
+float effectnum = particleeffectnum("particleconfig.effectname");
+pointparticles(effectnum, self.origin, v_forward, 1);
+you can call particleeffectnum any time you want, but if its not the first time the server sees that name then it'll involve reliable messages which may appear after the first unreliable effect is received by the client, which can cause the first time to fail to appear. so its generally best to use it like a precache
+or there's self.traileffectnum = particleeffectnum("particleconfig.effectname"); if you want to override an entity's particle trail
