@@ -70,21 +70,6 @@ Warning Type: Normal Announcements
 Keyvalues
 Targetname:
 
-Name <string>
-The targetname that other entities refer to this entity by.
-Entity Scripts <scriptlist> (New with Left 4 Dead 2)
-Space delimited list of VScript files (without file extension) that are executed after all entities have spawned. The scripts are all executed in the same script scope, later ones overwriting any identical variables and functions.
-Script think function <string> (New with Left 4 Dead 2)
-Name of a function in this entity''s script which will be called automatically every 100 milliseconds (ten times a second) for the duration of the script. It can be used to create timers or to simulate autonomous behavior. The return value (if present) will set the time until the next call.
- Note:	Try to avoid expensive operations in this function, as it may cause performance problems.
-Parentname:
-
-Parent <targetname>
-Specifies a movement parent. An entity will maintain its initial offset from its parent. An attachment point can be added to the end of the name, separated by a comma.
-Angles:
-
-Pitch Yaw Roll (Y Z X) <angle>
-This entity''s orientation in the world. Pitch is rotation around the Y axis, yaw is the rotation around the Z axis, roll is the rotation around the X axis.
 EnableDisable:
 
 Start Disabled (StartDisabled) <boolean>
@@ -109,8 +94,6 @@ Type of warning to issue to the team that owns the control point when the opposi
 2 : No Announcements
 Warning sound <string>
 Sound to be played when this point is being captured (if warn on capture is set).
-Randomly set the owner on restart <boolean>
-Randomly set the owner of this point during a full restart of the map. The ratio of default owners among the points with this flag will be kept when selecting random owners.
 Time-based point value for RED. <integer>
 To do: add description
 Time-based point value for BLUE. <integer>
@@ -127,12 +110,6 @@ RED model bodygroup <integer>
 Control point model bodygroup used when RED owns the point.
 BLUE model bodygroup <integer>
 Control point model bodygroup used when RED owns the point.
-HUD overlay neutral <material>
-HUD material that will overlay the icon when no one owns the point.
-HUD overlay RED <material>
-HUD material that will overlay the icon when RED owns the point.
-HUD overlay BLUE <material>
-HUD material that will overlay the icon when BLUE owns the point.
 RED Previous Required Point 1 <targetname>
 The name of a previous capture point that RED must own to be able to capture this point. If empty, the team must own all points preceding this one. Pointing to itself means no previous point required.
 RED Previous Required Point 2 <targetname>
@@ -145,11 +122,7 @@ BLUE Previous Required Point 2 <targetname>
 The name of a second previous capture point that BLUE must own to be able to capture this point.
 BLUE Previous Required Point 3 <targetname>
 The name of a third previous capture point that BLUE must own to be able to capture this point.
-Flags
-1 : Hide Control Point on HUD
-2 : Start with model hidden
-4 : Disable shadow
-8 : Disable sounds
+
 Inputs
 Targetname:
 
