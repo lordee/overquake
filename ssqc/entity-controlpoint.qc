@@ -1,11 +1,34 @@
+float CheckEnts()
+{
+    entity cpm = find(world, classname, "team_control_point_master");
+    if (!cpm)
+    {
+        bprint(PRINT_HIGH, "team_control_point_master does not exist, cannot load map");
+        return FALSE;
+    }
+        
+    entity tcp;
+    tcp = find(world, classname, "team_control_point");
+    while (tcp)
+    {
+        
+        tcp = find(tcp, classname, "team_control_point");
+    }
+
+    return TRUE;
+}
+
+float DidTeamWin(float teamno)
+{
+    entity cpm = find(world, classname, "team_control_point_master");
+
+}
+
 void team_control_point_master()
 {
     /*This entity controls all the control points in a map. It is responsible for the layout of the hud icons as well as some round specific settings. */
-    self.classname = "controlpointmaster";
-
-    // do stuff with self.caplayout
-    Cap Layout <string>
-    A string that tells the HUD how to lay out the cap points. It should be a string with indexes of cap points separated by commas to denote a new line. So 2,0 1 would create a pyramid, with cap point 2 on the top and cap points 0 & 1 on the bottom.
+    
+    // do stuff with self.caplayout should be a string with indexes of cap points separated by commas to denote a new line. So 2,0 1 would create a pyramid, with cap point 2 on the top and cap points 0 & 1 on the bottom.
 
     //self.restrictteamfromwin
     Restrict team from winning <choices>
