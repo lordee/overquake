@@ -885,7 +885,7 @@ void (float imp, string alias) AliasCommand = {
 
 void () AliasImpulses = {
 	AliasCommand(READY, "ready");
-    AliasCommand(MNU_OPEN_SHOP, "menu_open_shop");
+    
 }
 
 /*
