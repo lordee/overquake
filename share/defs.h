@@ -223,6 +223,10 @@
 #define SE_NETNAME       4
 #define SE_PLAYER       5
 
+#define OPT_NEITHER 0
+#define OPT_BOTH    1
+#define OPT_BLUE    2
+#define OPT_RED     3
 // menus
 #define MNU_INACTIVE 0
 #define MNU_LOBBYTEAM 1

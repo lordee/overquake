@@ -9,10 +9,10 @@ float CheckEnts()
         
     entity tcp;
     tcp = find(world, classname, "team_control_point");
-    while (tcp)
+    if (!tcp)
     {
-        
-        tcp = find(tcp, classname, "team_control_point");
+        bprint(PRINT_HIGH, "team_control_point does not exist, cannot load map");
+        return FALSE;
     }
 
     return TRUE;
@@ -22,6 +22,11 @@ float DidTeamWin(float teamno)
 {
     entity cpm = find(world, classname, "team_control_point_master");
 
+    if (cpm.restrictteamfromwin == teamno || cpm.restrictteamfromwin == OPT_BOTH)
+    {
+        return FALSE;
+    }
+    return TRUE;
 }
 
 void team_control_point_master()
@@ -30,15 +35,7 @@ void team_control_point_master()
     
     // do stuff with self.caplayout should be a string with indexes of cap points separated by commas to denote a new line. So 2,0 1 would create a pyramid, with cap point 2 on the top and cap points 0 & 1 on the bottom.
 
-    //self.restrictteamfromwin
-    Restrict team from winning <choices>
-    Prevent this team from winning by capping all the points. This field is ignored if you''re using control_point_rounds in your map (set the corresponding field inside the rounds).
-    0 : Neither
-    1 : Both
-    2 : Red
-    3 : Blue
-
-    //self.switchteamsonwin
+    // self.switchteamsonwin
 
     // self.scorestyle - 0 points for hold, 1 points for round win, 2 points for captured cp
 
@@ -70,16 +67,9 @@ void team_control_point()
     self.bluemustown3
 }
 
-void trigger_capture_area_touch()
-{
-    if (other.classname == "player")
-    {
-        // 
-    }
-}
-
 void trigger_capture_area()
 {
+
     self.solid = SOLID_TRIGGER;
     self.touch = trigger_capture_area_touch;
     self.bluecancap
