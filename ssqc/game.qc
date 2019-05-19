@@ -7,7 +7,7 @@ void () GameThink = {
         if (p.deadflag == DEAD_DEAD)
         {
             p.respawntime = p.respawntime - 1;
-            if (p.respawntime == 0)
+            if (p.respawntime <= 0)
             {
                 oldself = self;
                 self = p;
