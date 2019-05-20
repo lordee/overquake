@@ -18,7 +18,7 @@ float CheckEnts()
     return TRUE;
 }
 
-float DidTeamWin(float teamno)
+float CanTeamWin(float teamno)
 {
     entity cpm = find(world, classname, "team_control_point_master");
 
@@ -27,6 +27,14 @@ float DidTeamWin(float teamno)
         return FALSE;
     }
     return TRUE;
+}
+
+void team_control_point_master_Think()
+{
+    //if (!GameStarted)
+    //    return;
+
+    
 }
 
 void team_control_point_master()
@@ -40,6 +48,9 @@ void team_control_point_master()
     // self.scorestyle - 0 points for hold, 1 points for round win, 2 points for captured cp
 
     // self.winneronroundend 0, 1, 2 Firing this Input when a point capture is in progress will not cancel the capture, resulting in an Overtime condition.
+
+    self.think = team_control_point_master_Think;
+    self.nextthink = time + 1;
 }
 
 void team_control_point()
@@ -67,11 +78,125 @@ void team_control_point()
     self.bluemustown3
 }
 
+void CalcCaptureProgress()
+{
+    // need to track last capture percentage etc
+    float percenttime = 100 / self.timetocap;
+    float timediff = time - self.cnt;
+
+    float percen = floor(timediff / percenttime);
+    if (percen > 0)
+    {
+        self.progress = self.progress + percen;
+        self.cnt = self.cnt + (percen * percenttime);
+    }
+
+    // TODO - finish this, what happens on 100 percent etc
+}
+
+void trigger_capture_area_Think()
+{
+    self.nextthink = time + .1;
+    //if (!GameStarted)
+    //    return;
+
+    entity cp = find(world, targetname, self.target);
+    if (!cp)
+    {
+        bprint(PRINT_HIGH, "trigger_capture_area is not linked to a team_control_point (target/targetname)");
+        return;
+    }
+
+    float ownerplayers;
+    float enemyplayers;
+    float blueplayers;
+    float redplayers;
+    entity p;
+    p = find (world, classname, "player")
+    {
+        if (p is within brush ent area)
+        {
+            if (p.team_no == 1)
+            {
+                blueplayers = blueplayers + 1;
+            }
+            else if (p.team_no == 2)
+            {
+                redplayers = redplayers + 1;
+            }
+            
+            if (p.team_no == self.team_no)
+            {
+                ownerplayers = ownerplayers + 1;
+            }
+            else if (p.team_no != self.team_no && self.team_no != 0)
+            {
+                enemyplayers = enemyplayers + 1;
+            }
+        }
+        
+        p = find(p, classname, "player");
+    }
+
+    // TODO - refactor, it's ugly
+    // if capped
+    if (self.progress == 100)
+    {
+        if (self.team_no == 1)
+        {
+            if (!self.redcancap)
+                return;
+        } 
+        else if (self.team_no == 2)
+        {
+            if (!self.bluecancap)
+                return;
+        }
+
+        if (ownerplayers == 0 && enemyplayers >= self.numtocap)
+        {           
+            CalcCaptureProgress();
+        }
+    }
+    else
+    {
+        // if not capped
+        if (self.team_no == 0)
+        {
+            if (blueplayers >= self.numtocap && redplayers == 0 && self.bluecancap)
+            {
+                CalcCaptureProgress();
+            }
+            else if (redplayers >= self.numtocap && blueplayers == 0 && self.redcancap)
+            {
+                CalcCaptureProgress();
+            }
+        }
+        else
+        {
+            // it has an owner
+            if (self.team_no == 1 && redplayers >= self.numtocap && blueplayers == 0 && self.redcancap)
+            {
+                CalcCaptureProgress();
+            }
+            else if (self.team_no == 2 && blueplayers >= self.numtocap && redplayers == 0 && self.bluecancap)
+            {
+                CalcCaptureProgress();
+            }
+        }
+    }
+}
+
+void trigger_capture_area_Touch()
+{
+    dprint("other touch: ", other.classname);
+}
+
 void trigger_capture_area()
 {
 
     self.solid = SOLID_TRIGGER;
-    self.touch = trigger_capture_area_touch;
+    self.touch = trigger_capture_area_Touch;
     self.bluecancap
     self.redcancap
     self.target
@@ -81,5 +206,6 @@ void trigger_capture_area()
 
 //	The HUD will show the waiting for teammate message if the control point is currently disabled.
 
-
+    self.think = trigger_capture_area_Think;
+    self.nextthink = time + .1;
 }
