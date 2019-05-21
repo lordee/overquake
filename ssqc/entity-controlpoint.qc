@@ -56,26 +56,51 @@ void team_control_point_master()
 void team_control_point()
 {
     /*
-    Designates the location of a capture point; use in conjunction with trigger_capture_area. There is a maximum of 8 control points per map.*/
+    Designates the location of a capture point; use in conjunction with trigger_capture_area.*/
 
-    self.netname
-    self.targetname
-    self.capnum // must be unique
-    self.team_no // current owner, colours hud too
-    self.disabled
-    self.noise // played on being captured
-    self.noise1 // played on capture finish
-    self.noise2 // sound on point resets
-    self.neutralmodel // not owned
-    self.bluemodel
-    self.redmodel
-    self.timebetweenpointscore
+    if (!self.targetname)
+    {
+        bprint(PRINT_HIGH, "targetname not set on team_control_point!");
+        return;
+    }
+
+    if (!self.noise)
+        self.noise = "capture.wav";
+    
+    if (!self.noise1)
+        self.noise1 = "capturefinish.wav";
+
+    if (!self.noise2)
+        self.noise2 = "capturereset.wav";
+        
+    precache_sound(self.noise);
+    precache_sound(self.noise1);
+    precache_sound(self.noise2);
+
+    if (!self.neutralmodel)
+        self.neutralmodel = "captureneutral.mdl";
+
+    if (!self.bluemodel)
+        self.bluemodel = "captureblue.mdl";
+
+    if (!self.redmodel)
+        self.redmodel = "capturered.mdl";
+
+    precache_model(self.neutralmodel);
+    precache_model(self.bluemodel);
+    precache_model(self.redmodel);
+
+    if (!self.timebetweenpointscore)
+        self.timebetweenpointscore = 5;
+
+    /*
     self.redmustown1 // If empty, the team must own all points preceding this one. Pointing to itself means no previous point required.
     self.redmustown2
     self.redmustown3
     self.bluemustown1 // If empty, the team must own all points preceding this one. Pointing to itself means no previous point required.
     self.bluemustown2
     self.bluemustown3
+    */
 }
 
 void CalcCaptureProgress()
@@ -90,8 +115,6 @@ void CalcCaptureProgress()
         self.progress = self.progress + percen;
         self.cnt = self.cnt + (percen * percenttime);
     }
-
-    // TODO - finish this, what happens on 100 percent etc
 }
 
 void trigger_capture_area_Think()
@@ -100,11 +123,19 @@ void trigger_capture_area_Think()
     //if (!GameStarted)
     //    return;
 
-    entity cp = find(world, targetname, self.target);
-    if (!cp)
+    if (!self.owner)
     {
-        bprint(PRINT_HIGH, "trigger_capture_area is not linked to a team_control_point (target/targetname)");
-        return;
+        entity cp = find(world, targetname, self.target);
+        if (!cp)
+        {
+            bprint(PRINT_HIGH, "trigger_capture_area is not linked to a team_control_point (target/targetname)");
+            self.nextthink = 0;
+            return;
+        }
+        else
+        {
+            self.owner = cp;
+        }
     }
 
     float ownerplayers;
@@ -125,11 +156,11 @@ void trigger_capture_area_Think()
                 redplayers = redplayers + 1;
             }
             
-            if (p.team_no == self.team_no)
+            if (p.team_no == self.owner.team_no)
             {
                 ownerplayers = ownerplayers + 1;
             }
-            else if (p.team_no != self.team_no && self.team_no != 0)
+            else if (p.team_no != self.owner.team_no && self.owner.team_no != 0)
             {
                 enemyplayers = enemyplayers + 1;
             }
@@ -142,48 +173,54 @@ void trigger_capture_area_Think()
     // if capped
     if (self.progress == 100)
     {
-        if (self.team_no == 1)
+        if (self.owner.team_no == 1)
         {
             if (!self.redcancap)
                 return;
         } 
-        else if (self.team_no == 2)
+        else if (self.owner.team_no == 2)
         {
             if (!self.bluecancap)
                 return;
         }
+    }
 
-        if (ownerplayers == 0 && enemyplayers >= self.numtocap)
-        {           
+    // if not capped
+    float teamcapping = 0;
+    if (self.owner.team_no == 0)
+    {
+        if (blueplayers >= self.numtocap && redplayers == 0 && self.bluecancap)
+        {
+            teamcapping = 1;
+            CalcCaptureProgress();
+        }
+        else if (redplayers >= self.numtocap && blueplayers == 0 && self.redcancap)
+        {
+            teamcapping = 2;
             CalcCaptureProgress();
         }
     }
     else
     {
-        // if not capped
-        if (self.team_no == 0)
+        // it has an owner
+        if (self.owner.team_no == 1 && redplayers >= self.numtocap && blueplayers == 0 && self.redcancap)
         {
-            if (blueplayers >= self.numtocap && redplayers == 0 && self.bluecancap)
-            {
-                CalcCaptureProgress();
-            }
-            else if (redplayers >= self.numtocap && blueplayers == 0 && self.redcancap)
-            {
-                CalcCaptureProgress();
-            }
+            teamcapping = 2;
+            CalcCaptureProgress();
         }
-        else
+        else if (self.owner.team_no == 2 && blueplayers >= self.numtocap && redplayers == 0 && self.bluecancap)
         {
-            // it has an owner
-            if (self.team_no == 1 && redplayers >= self.numtocap && blueplayers == 0 && self.redcancap)
-            {
-                CalcCaptureProgress();
-            }
-            else if (self.team_no == 2 && blueplayers >= self.numtocap && redplayers == 0 && self.bluecancap)
-            {
-                CalcCaptureProgress();
-            }
+            teamcapping = 1;
+            CalcCaptureProgress();
         }
+    }
+    
+    // check if cap finished
+    if (self.progress == 100)
+    {
+        self.owner.team_no = teamcapping;
+
+        // TODO - change model etc of cap point, play a sound
     }
 }
 
@@ -202,7 +239,6 @@ void trigger_capture_area()
     self.target
     self.numtocap // players required to cap --The ideal value is 2, but if you''re making a map with 5 capture points, ideally, you will want to set the first capture points'' to 1, the second ones'' to 2 and the middle one''s to 3.
     self.timetocap // Ideally, this should be 5-20 seconds.
-    self.capnum // capnum it is linked to
 
 //	The HUD will show the waiting for teammate message if the control point is currently disabled.
 
