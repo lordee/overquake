@@ -956,12 +956,6 @@ void() W_SetCurrentAmmo =
 		self.weaponframe = 0;
 		self.items = self.items | IT_CELLS;
 	}
-	else
-	{
-		self.currentammo = 0;
-		self.weaponmodel = "";
-		self.weaponframe = 0;
-	}
 };
 
 float() W_BestWeapon =

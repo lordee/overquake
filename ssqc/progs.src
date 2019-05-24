@@ -19,7 +19,6 @@ triggers.qc
 plats.qc
 misc.qc
 
-server.qc
 ../share/helpers.qc
 endpoints.qc
 champ.qc
