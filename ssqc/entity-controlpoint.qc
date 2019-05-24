@@ -39,7 +39,19 @@ void team_control_point_master_Think()
     cp = find(world, classname, "team_control_point");
     while (cp)
     {
-
+        if (cp.team_no != 0)
+        {
+            switch (self.scorestyle)
+            {
+                
+            }
+            if ((cp.timesincelastpointscore + cp.timebetweenpointscore) <= time)
+            {
+                self.bluescore = 
+                // award points to team
+                cp.timesincelastpointscore = time;
+            }
+        }
         cp = find(cp, classname, "team_control_point");
     }
 
@@ -61,11 +73,9 @@ void team_control_point_master()
     self.nextthink = time + 1;
 }
 
+/*Designates the location of a capture point; use in conjunction with trigger_capture_area.*/
 void team_control_point()
 {
-    /*
-    Designates the location of a capture point; use in conjunction with trigger_capture_area.*/
-
     if (!self.targetname)
     {
         bprint(PRINT_HIGH, "targetname not set on team_control_point!");
@@ -363,16 +373,8 @@ void trigger_capture_area_Touch()
 
 void trigger_capture_area()
 {
-
     self.solid = SOLID_TRIGGER;
     self.touch = trigger_capture_area_Touch;
-    self.bluecancap
-    self.redcancap
-    self.target
-    self.numtocap // players required to cap --The ideal value is 2, but if you''re making a map with 5 capture points, ideally, you will want to set the first capture points'' to 1, the second ones'' to 2 and the middle one''s to 3.
-    self.timetocap // Ideally, this should be 5-20 seconds.
-
-//	The HUD will show the waiting for teammate message if the control point is currently disabled.
 
     self.think = trigger_capture_area_Think;
     self.nextthink = time + .1;
