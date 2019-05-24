@@ -92,31 +92,95 @@ void team_control_point()
 
     if (!self.timebetweenpointscore)
         self.timebetweenpointscore = 5;
-
-    /*
-    self.redmustown1 // If empty, the team must own all points preceding this one. Pointing to itself means no previous point required.
-    self.redmustown2
-    self.redmustown3
-    self.bluemustown1 // If empty, the team must own all points preceding this one. Pointing to itself means no previous point required.
-    self.bluemustown2
-    self.bluemustown3
-    */
 }
 
-void CalcCaptureProgress()
+// TODO - this might be wrong, does it take into account leftover time between each whole percentage point? Review it
+void DoCaptureProgress(float teamcapping, float increase)
 {
     // need to track last capture percentage etc
     float percenttime = 100 / self.timetocap;
     float timediff = time - self.cnt;
 
     float percen = floor(timediff / percenttime);
+
     if (percen > 0)
     {
-        self.progress = self.progress + percen;
+        if (increase == TRUE)
+        {
+            self.progress = self.progress + percen;
+        }
+        else
+        {
+            self.progress = self.progress - percen;
+        }
         self.cnt = self.cnt + (percen * percenttime);
+    }
+
+    // check if cap finished
+    if (self.progress == 100)
+    {
+        self.owner.team_no = teamcapping;
+        string model = teamcapping == 1 ? self.owner.bluemodel : self.owner.redmodel;
+        
+        setmodel(self.owner, model);
+        entity p = find(world, classname, "player");
+        string cmd = strcat("play ", self.owner.noise1, "\n");
+        while (p)
+        {
+            stuffcmd(p, cmd);
+            p = find(p, classname, "player");
+        }
+    }
+    else if (self.progress == 0)
+    {
+        setmodel(self.owner, self.neutralmodel);
+        entity p = find(world, classname, "player");
+        string cmd = strcat("play ", self.owner.noise2, "\n");
+        while (p)
+        {
+            stuffcmd(p, cmd);
+            p = find(p, classname, "player");
+        }
     }
 }
 
+float PrecedingCapsOwned(float teamno, float cpnum, float selfcpnum)
+{
+    // cpnum is only checked here for blank for first one
+    // must own all points preceding this one if blank
+    if (!cpnum)
+    {
+        return FALSE;
+    }
+
+    // required cp points to self, it can be capped whenever
+    if (cpnum == selfcpnum)
+    {
+        return TRUE;
+    }
+
+    // is specifying what other capnums need to be owned
+    float owned;
+    owned = 0;
+    entity cp;
+    cp = find(world, classname, "team_control_point");
+    while (cp)
+    {
+        if (cp.capnum == cpnum)
+        {
+            if (cp.team_no == teamno)
+            {
+                return TRUE;
+            }
+        }
+        cp = find(cp, classname, "team_control_point");
+    }
+
+    // not satisfied
+    return FALSE;
+}
+
+// TODO - what about when a player steps out/it's not capped, we need to reset self.cnt = time, right?  Otherwise 30 seconds later someone caps and it automatically does 100%
 void trigger_capture_area_Think()
 {
     self.nextthink = time + .1;
@@ -138,6 +202,7 @@ void trigger_capture_area_Think()
         }
     }
 
+    // figure out who is capping
     float ownerplayers;
     float enemyplayers;
     float blueplayers;
@@ -169,59 +234,118 @@ void trigger_capture_area_Think()
         p = find(p, classname, "player");
     }
 
-    // TODO - refactor, it's ugly
-    // if capped
-    if (self.progress == 100)
+    // check there's enough players
+    float teamcapping;
+    teamcapping = 0;
+
+    if (blueplayers >= self.numtocap && redplayers == 0)
     {
-        if (self.owner.team_no == 1)
+        teamcapping = 1;
+        cappingplayers = blueplayers;
+    }
+    else if (redplayers >= self.numtocap && blueplayers == 0)
+    {
+        teamcapping = 2;
+        cappingplayers = redplayers;
+    }
+    else if (self.owner.team_no != 0)
+    {
+        return;
+    } 
+
+    if (teamcapping > 0)
+    {
+        // a team is capping, now check if they're allowed
+        switch (teamcapping)
         {
-            if (!self.redcancap)
-                return;
-        } 
-        else if (self.owner.team_no == 2)
-        {
-            if (!self.bluecancap)
-                return;
+            case 1:
+                if (!self.owner.bluecancap)
+                    return;
+
+                if (!PrecedingCapsOwned(1, self.owner.bluemustown1, self.owner.capnum))
+                    return;
+                // check others for a value, blank value only checked on first field
+                if (self.owner.redmustown2)
+                {
+                    if (!PrecedingCapsOwned(1, self.owner.bluemustown2, self.owner.capnum))
+                        return;
+                }
+
+                if (self.owner.redmustown3)
+                {
+                    if (!PrecedingCapsOwned(1, self.owner.bluemustown3, self.owner.capnum))
+                        return;
+                }
+                break;
+            case 2:
+                if (!self.owner.redcancap)
+                    return;
+
+                if (!PrecedingCapsOwned(2, self.owner.redmustown1, self.owner.capnum))
+                    return;
+                // check others for a value, blank value only checked on first field
+                if (self.owner.redmustown2)
+                {
+                    if (!PrecedingCapsOwned(2, self.owner.redmustown2, self.owner.capnum))
+                        return;
+                }
+
+                if (self.owner.redmustown3)
+                {
+                    if (!PrecedingCapsOwned(2, self.owner.redmustown3, self.owner.capnum))
+                        return;
+                }     
+                break;
         }
     }
 
-    // if not capped
-    float teamcapping = 0;
-    if (self.owner.team_no == 0)
+    if (cappingplayers < self.numtocap && teamcapping != 0)
+        return;
+
+    // work out if increasing or decreasing cap progress
+    float increase = FALSE;
+    if (self.owner.team_no == teamcapping)
     {
-        if (blueplayers >= self.numtocap && redplayers == 0 && self.bluecancap)
+        // already owned by capping team and progress is 100
+        if (self.progress == 100)
         {
-            teamcapping = 1;
-            CalcCaptureProgress();
+            return;
         }
-        else if (redplayers >= self.numtocap && blueplayers == 0 && self.redcancap)
+        else
         {
-            teamcapping = 2;
-            CalcCaptureProgress();
+            if (teamcapping == 0)
+            {
+                increase = FALSE;
+            }
+            else
+            {
+                increase = TRUE;
+            }
         }
     }
     else
     {
-        // it has an owner
-        if (self.owner.team_no == 1 && redplayers >= self.numtocap && blueplayers == 0 && self.redcancap)
+        // unowned, so increase progress
+        if (self.owner.team_no == 0)
         {
-            teamcapping = 2;
-            CalcCaptureProgress();
+            if (teamcapping == 0)
+            {
+                increase = FALSE;
+            }
+            else
+            {
+                increase = TRUE;    
+            }
         }
-        else if (self.owner.team_no == 2 && blueplayers >= self.numtocap && redplayers == 0 && self.bluecancap)
+        else
         {
-            teamcapping = 1;
-            CalcCaptureProgress();
+            increase = FALSE;
         }
+        
     }
     
-    // check if cap finished
-    if (self.progress == 100)
-    {
-        self.owner.team_no = teamcapping;
-
-        // TODO - change model etc of cap point, play a sound
-    }
+    // do cap progress
+    DoCaptureProgress(teamcapping, increase);
 }
 
 void trigger_capture_area_Touch()
