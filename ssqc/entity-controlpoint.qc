@@ -34,7 +34,15 @@ void team_control_point_master_Think()
     //if (!GameStarted)
     //    return;
 
-    
+    // go through capture points, see if points need to be awarded to a team
+    entity cp;
+    cp = find(world, classname, "team_control_point");
+    while (cp)
+    {
+
+        cp = find(cp, classname, "team_control_point");
+    }
+
 }
 
 void team_control_point_master()
