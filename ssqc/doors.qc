@@ -104,7 +104,7 @@ void() door_go_down =
 void() door_go_up =
 {
 	if (self.state == STATE_UP)
-		return;         // allready going up
+		return;         // already going up
 
 	if (self.state == STATE_TOP)
 	{       // reset top wait time
