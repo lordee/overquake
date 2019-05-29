@@ -3,7 +3,6 @@ void () GameThink = {
     p = find(world, classname, "player");
     while (p)
     {
-       
         if (p.deadflag == DEAD_DEAD)
         {
             p.respawntime = p.respawntime - 1;
@@ -47,6 +46,12 @@ void () StartGame = {
     self.cnt2 = 0;
     self.think = GameThink;
     self.nextthink = time + 1;
+
+    rounds = infokey(world, "rounds");
+    if (!rounds)
+    {
+        rounds = 2;
+    }
 
     GameStarted = TRUE;
 }
@@ -99,6 +104,3 @@ void () LobbyThink = {
     // we got this far, start the game
     StartGame();
 }
-
-
-

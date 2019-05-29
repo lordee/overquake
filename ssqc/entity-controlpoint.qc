@@ -29,45 +29,185 @@ float CanTeamWin(float teamno)
     return TRUE;
 }
 
-void team_control_point_master_Think()
+void DoRoundWin(float teamno)
 {
-    //if (!GameStarted)
-    //    return;
+    rounds = rounds - 1;
 
-    // go through capture points, see if points need to be awarded to a team
+    if (rounds == 0)
+    {
+        // game is over
+        switch (self.scorestyle)
+        {
+            case SCORESTYLE_HOLD:
+                switch (teamno)
+                {
+                    case TEAM_NONE:
+
+                        break;
+                    case TEAM_BLUE:
+
+                        break;
+                    case TEAM_RED:
+
+                        break;
+                }
+                break;
+            case SCORESTYLE_TIME:
+
+                break;
+        }
+    }
+    else
+    {
+        switch (self.scorestyle)
+        {
+            case SCORESTYLE_HOLD:
+                
+                break;
+            case SCORESTYLE_TIME:
+                // TODO - track round time, set as countdown time for next round, swap teams
+                
+                break;
+        }
+        
+        if (self.switchteamsonwin)
+        {
+            // reset all ents to their original values (disabled/activated etc)
+            // change team nums on each ent
+        }
+    }
+}
+
+void CalcScoreHold()
+{
     entity cp;
     cp = find(world, classname, "team_control_point");
     while (cp)
     {
         if (cp.team_no != 0)
         {
-            switch (self.scorestyle)
+            if (self.scorestyle == SCORESTYLE_HOLD)
             {
-                
-            }
-            if ((cp.timesincelastpointscore + cp.timebetweenpointscore) <= time)
-            {
-                self.bluescore = 
-                // award points to team
-                cp.timesincelastpointscore = time;
+                if ((cp.timesincelastpointscore + cp.timebetweenpointscore) <= time)
+                {
+                    // award points to team
+                    switch (cp.team_no)
+                    {
+                        case TEAM_BLUE:
+                            self.bluescore = self.bluescore + 1;
+                            break;
+                        case TEAM_RED:
+                            self.redscore = self.redscore + 1;
+                            break;
+                    }
+                    
+                    cp.timesincelastpointscore = cp.timesincelastpointscore + cp.timebetweenpointscore;
+                }
             }
         }
         cp = find(cp, classname, "team_control_point");
     }
 
+    float maxscore;
+    maxscore = stof(infokey(world, "max_teamscore"));
+    if (self.bluescore >= maxscore && self.redscore >= maxscore)
+    {
+        // TODO draw?
+        DoRoundWin(TEAM_NONE);
+    }
+    else if (self.bluescore >= maxscore)
+    {
+        DoRoundWin(TEAM_BLUE);
+    }
+    else if (self.redscore >= maxscore)
+    {
+        DoRoundWin(TEAM_RED);
+    }
 }
 
+void CalcScoreTime()
+{
+    float won = TRUE;
+    float capteam = TEAM_NONE;
+    entity cp;
+    cp = find(world, classname, "team_control_point");
+    while (cp)
+    {
+        if (won == 0)
+        {
+            if (cp.team_no == TEAM_NONE)
+            {
+                won = FALSE;
+                break;
+            }
+            else
+            {
+                capteam = cp.team_no;
+                won = TRUE;
+                cp = find(cp, classname, "team_control_point");
+                continue;
+            }
+        }
+
+        if (cp.team_no != capteam)
+        {
+            won = FALSE;
+            break;
+        }
+
+        cp = find(cp, classname, "team_control_point");
+    }
+
+    if (won)
+    {
+        DoWin(capteam);
+    }
+}
+
+void team_control_point_master_Think()
+{
+    self.nextthink = time + 1;
+    //if (!GameStarted)
+    //    return;
+
+    // go through capture points, see if points need to be awarded to a team
+    switch (self.scorestyle)
+    {
+        case SCORESTYLE_HOLD:
+            CalcScoreHold();
+            break;
+        case SCORESTYLE_TIME:
+            CalcScoreTime();
+            break;
+    }
+}
+
+/*This entity controls all the control points in a map. It is responsible for the layout of the hud icons as well as some round specific settings. */
 void team_control_point_master()
 {
-    /*This entity controls all the control points in a map. It is responsible for the layout of the hud icons as well as some round specific settings. */
+    // fastest to cap cps in a round, other team gets that time to cap
+    // points every x seconds whilst holding 
     
-    // do stuff with self.caplayout should be a string with indexes of cap points separated by commas to denote a new line. So 2,0 1 would create a pyramid, with cap point 2 on the top and cap points 0 & 1 on the bottom.
+    // self.caplayout should be a string with indexes of cap points separated by commas to denote a new line. So 2,0 1 would create a pyramid, with cap point 2 on the top and cap points 0 & 1 on the bottom.
+    float count = 0;
+    entity cp;
+    cp = find (world, classname, "team_control_point");
+        
+    while(cp)
+    {
+        count++;
+        layout = strcat(layout, ", ", cp.capnum);
+        cp = find(cp, classname, "team_control_point");
+    }
 
+    if (!self.caplayout)
+    {
+        // random caplayout string if not set
+        self.caplayout = layout;
+    }
+    self.capcount = count;
+    
     // self.switchteamsonwin
-
-    // self.scorestyle - 0 points for hold, 1 points for round win, 2 points for captured cp
-
-    // self.winneronroundend 0, 1, 2 Firing this Input when a point capture is in progress will not cancel the capture, resulting in an Overtime condition.
 
     self.think = team_control_point_master_Think;
     self.nextthink = time + 1;
@@ -230,11 +370,11 @@ void trigger_capture_area_Think()
     {
         if (p is within brush ent area)
         {
-            if (p.team_no == 1)
+            if (p.team_no == TEAM_BLUE)
             {
                 blueplayers = blueplayers + 1;
             }
-            else if (p.team_no == 2)
+            else if (p.team_no == TEAM_RED)
             {
                 redplayers = redplayers + 1;
             }
@@ -243,7 +383,7 @@ void trigger_capture_area_Think()
             {
                 ownerplayers = ownerplayers + 1;
             }
-            else if (p.team_no != self.owner.team_no && self.owner.team_no != 0)
+            else if (p.team_no != self.owner.team_no && self.owner.team_no != TEAM_NONE)
             {
                 enemyplayers = enemyplayers + 1;
             }
@@ -254,19 +394,19 @@ void trigger_capture_area_Think()
 
     // check there's enough players
     float teamcapping;
-    teamcapping = 0;
+    teamcapping = TEAM_NONE;
 
     if (blueplayers >= self.numtocap && redplayers == 0)
     {
-        teamcapping = 1;
+        teamcapping = TEAM_BLUE;
         cappingplayers = blueplayers;
     }
     else if (redplayers >= self.numtocap && blueplayers == 0)
     {
-        teamcapping = 2;
+        teamcapping = TEAM_RED;
         cappingplayers = redplayers;
     }
-    else if (self.owner.team_no != 0)
+    else if (self.owner.team_no != TEAM_NONE)
     {
         return;
     } 
@@ -276,48 +416,48 @@ void trigger_capture_area_Think()
         // a team is capping, now check if they're allowed
         switch (teamcapping)
         {
-            case 1:
+            case TEAM_BLUE:
                 if (!self.owner.bluecancap)
                     return;
 
-                if (!PrecedingCapsOwned(1, self.owner.bluemustown1, self.owner.capnum))
+                if (!PrecedingCapsOwned(TEAM_BLUE, self.owner.bluemustown1, self.owner.capnum))
                     return;
                 // check others for a value, blank value only checked on first field
                 if (self.owner.redmustown2)
                 {
-                    if (!PrecedingCapsOwned(1, self.owner.bluemustown2, self.owner.capnum))
+                    if (!PrecedingCapsOwned(TEAM_BLUE, self.owner.bluemustown2, self.owner.capnum))
                         return;
                 }
 
                 if (self.owner.redmustown3)
                 {
-                    if (!PrecedingCapsOwned(1, self.owner.bluemustown3, self.owner.capnum))
+                    if (!PrecedingCapsOwned(TEAM_BLUE, self.owner.bluemustown3, self.owner.capnum))
                         return;
                 }
                 break;
-            case 2:
+            case TEAM_RED:
                 if (!self.owner.redcancap)
                     return;
 
-                if (!PrecedingCapsOwned(2, self.owner.redmustown1, self.owner.capnum))
+                if (!PrecedingCapsOwned(TEAM_RED, self.owner.redmustown1, self.owner.capnum))
                     return;
                 // check others for a value, blank value only checked on first field
                 if (self.owner.redmustown2)
                 {
-                    if (!PrecedingCapsOwned(2, self.owner.redmustown2, self.owner.capnum))
+                    if (!PrecedingCapsOwned(TEAM_RED, self.owner.redmustown2, self.owner.capnum))
                         return;
                 }
 
                 if (self.owner.redmustown3)
                 {
-                    if (!PrecedingCapsOwned(2, self.owner.redmustown3, self.owner.capnum))
+                    if (!PrecedingCapsOwned(TEAM_RED, self.owner.redmustown3, self.owner.capnum))
                         return;
                 }     
                 break;
         }
     }
 
-    if (cappingplayers < self.numtocap && teamcapping != 0)
+    if (cappingplayers < self.numtocap && teamcapping != TEAM_NONE)
         return;
 
     // work out if increasing or decreasing cap progress
@@ -331,7 +471,7 @@ void trigger_capture_area_Think()
         }
         else
         {
-            if (teamcapping == 0)
+            if (teamcapping == TEAM_NONE)
             {
                 increase = FALSE;
             }
@@ -344,9 +484,9 @@ void trigger_capture_area_Think()
     else
     {
         // unowned, so increase progress
-        if (self.owner.team_no == 0)
+        if (self.owner.team_no == TEAM_NONE)
         {
-            if (teamcapping == 0)
+            if (teamcapping == TEAM_NONE)
             {
                 increase = FALSE;
             }
