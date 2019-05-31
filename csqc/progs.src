@@ -2,7 +2,6 @@
 csdefs.qc
 csoqdefs.qc
 sui_sys.qc
-../share/helpers.qc
 ../share/champtypes.qc
 csutil.qc
 csqc.qc

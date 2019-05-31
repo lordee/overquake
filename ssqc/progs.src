@@ -19,7 +19,6 @@ triggers.qc
 plats.qc
 misc.qc
 
-../share/helpers.qc
 endpoints.qc
 champ.qc
 champfrostarcher.qc
