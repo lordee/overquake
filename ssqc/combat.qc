@@ -263,59 +263,6 @@ void(entity targ, entity inflictor, entity attacker, float damage) T_Damage =
 			at.health = 10;
             at.owner.assist_count = at.owner.assist_count + 1;
 		}
-
-		entity creep;
-		float dist;
-		creep = find (world, classname, "creep");
-
-		while (creep)
-		{
-			if (creep.team_no == targ.team_no)
-			{
-				// if minions are near
-				dist = vlen(targ.origin - creep.origin);
-
-				if (dist <= CREEP_AGRO_RANGE)
-				{
-					// if minions don't have a champ target, target the attacker
-					if (!creep.enemy || creep.enemy.classname != "player")
-					{
-						creep.enemy = attacker;
-					}
-				}
-			}
-			creep = find(creep, classname, "creep");
-		}
-
-        // do same for tower
-        float dist2;
-        dist2 = 0;
-        entity tower;
-        tower = find(world, classname, "item_qwmgoal");
-        while (tower)
-        {
-            if (tower.team_no != attacker.team_no)
-            {
-                if (tower.enemy)
-                {
-                    if (tower.enemy.classname == "player")
-                    {
-                        return;
-                    }
-                }
-
-                dist = vlen(attacker.origin - tower.origin);
-                if (dist <= STRUCTURE_TOWER_RANGE)
-                {
-                    dist2 = vlen(targ.origin - tower.origin);
-                    if (dist2 <= STRUCTURE_TOWER_RANGE)
-                    {
-                        tower.enemy = attacker;
-                    }
-                }
-            }
-            tower = find(tower, classname, "item_qwmgoal");
-        }
 	}
 
 	if (targ.health <= 0)
@@ -334,7 +281,7 @@ void(entity targ, entity inflictor, entity attacker, float damage) T_Damage =
 	}
 
 	self = oldself;
-};
+}
 
 /*
 ============
@@ -407,4 +354,4 @@ void(entity attacker, float damage) T_BeamDamage =
 		}
 		head = head.chain;
 	}
-};
+}

@@ -48,6 +48,7 @@
 .float consecutive_deaths;
 .float consecutive_kills;
 .float kill_tier;
+.float respawn_time;
 
 .float respawntime;
 .float cnt2;
@@ -65,3 +66,35 @@
 
 entity oldself;
 float GameStarted;
+
+// cp defs
+.float restrictteamfromwin;
+.float scorestyle;
+.float switchteamsonwin;
+.float timesincelastpointscore;
+.float timebetweenpointscore;
+.float bluescore;
+.float redscore;
+.float capnum;
+.string caplayout;
+.string neutralmodel;
+.string bluemodel;
+.string redmodel;
+.float timetocap;
+.float progress;
+.float numtocap;
+.float bluecancap;
+.float redcancap;
+.float bluemustown1;
+.float bluemustown2;
+.float bluemustown3;
+.float redmustown1;
+.float redmustown2;
+.float redmustown3;
+
+// quadmode
+float rounds;
+float team1score;
+float team2score;
+float quad_winner;
+float number_of_teams;

@@ -227,6 +227,15 @@
 #define OPT_BOTH    1
 #define OPT_BLUE    2
 #define OPT_RED     3
+
+#define TEAM_NONE 0
+#define TEAM_BLUE 1
+#define TEAM_RED 2
+
+// cp
+#define SCORESTYLE_HOLD 0
+#define SCORESTYLE_TIME 1
+
 // menus
 #define MNU_INACTIVE 0
 #define MNU_LOBBYTEAM 1

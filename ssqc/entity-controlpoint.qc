@@ -94,10 +94,10 @@ void CalcScoreHold()
                     switch (cp.team_no)
                     {
                         case TEAM_BLUE:
-                            self.bluescore = self.bluescore + 1;
+                            team1score++;
                             break;
                         case TEAM_RED:
-                            self.redscore = self.redscore + 1;
+                            team2score++;
                             break;
                     }
                     
@@ -110,16 +110,16 @@ void CalcScoreHold()
 
     float maxscore;
     maxscore = stof(infokey(world, "max_teamscore"));
-    if (self.bluescore >= maxscore && self.redscore >= maxscore)
+    if (team1score >= maxscore && team2score >= maxscore)
     {
         // TODO draw?
         DoRoundWin(TEAM_NONE);
     }
-    else if (self.bluescore >= maxscore)
+    else if (team1score >= maxscore)
     {
         DoRoundWin(TEAM_BLUE);
     }
-    else if (self.redscore >= maxscore)
+    else if (team2score >= maxscore)
     {
         DoRoundWin(TEAM_RED);
     }
@@ -160,7 +160,7 @@ void CalcScoreTime()
 
     if (won)
     {
-        DoWin(capteam);
+        DoRoundWin(capteam);
     }
 }
 
@@ -192,11 +192,11 @@ void team_control_point_master()
     float count = 0;
     entity cp;
     cp = find (world, classname, "team_control_point");
-        
+    string layout = "";
     while(cp)
     {
         count++;
-        layout = strcat(layout, ", ", cp.capnum);
+        layout = strcat(layout, ", ", ftos(cp.capnum));
         cp = find(cp, classname, "team_control_point");
     }
 
@@ -205,7 +205,6 @@ void team_control_point_master()
         // random caplayout string if not set
         self.caplayout = layout;
     }
-    self.capcount = count;
     
     // self.switchteamsonwin
 
@@ -275,14 +274,15 @@ void DoCaptureProgress(float teamcapping, float increase)
     }
 
     // check if cap finished
+    entity p = find(world, classname, "player");
+    string cmd = "play ";
     if (self.progress == 100)
     {
         self.owner.team_no = teamcapping;
         string model = teamcapping == 1 ? self.owner.bluemodel : self.owner.redmodel;
         
         setmodel(self.owner, model);
-        entity p = find(world, classname, "player");
-        string cmd = strcat("play ", self.owner.noise1, "\n");
+        cmd = strcat(cmd, self.owner.noise1, "\n");
         while (p)
         {
             stuffcmd(p, cmd);
@@ -292,8 +292,7 @@ void DoCaptureProgress(float teamcapping, float increase)
     else if (self.progress == 0)
     {
         setmodel(self.owner, self.neutralmodel);
-        entity p = find(world, classname, "player");
-        string cmd = strcat("play ", self.owner.noise2, "\n");
+        cmd = strcat(cmd, self.owner.noise2, "\n");
         while (p)
         {
             stuffcmd(p, cmd);
@@ -361,31 +360,36 @@ void trigger_capture_area_Think()
     }
 
     // figure out who is capping
-    float ownerplayers;
-    float enemyplayers;
-    float blueplayers;
-    float redplayers;
+    float ownerplayers = 0;
+    float enemyplayers = 0;
+    float blueplayers = 0;
+    float redplayers = 0;
     entity p;
-    p = find (world, classname, "player")
+    p = find (world, classname, "player");
+
+    while (p)
     {
-        if (p is within brush ent area)
+        if (p.origin_z >= self.absmin_z && p.origin_x >= self.absmin_x && p.origin_y >= self.absmin_y)
         {
-            if (p.team_no == TEAM_BLUE)
+            if (p.origin_z >= self.absmax_z && p.origin_x >= self.absmax_x && p.origin_y >= self.absmax_y)
             {
-                blueplayers = blueplayers + 1;
-            }
-            else if (p.team_no == TEAM_RED)
-            {
-                redplayers = redplayers + 1;
-            }
-            
-            if (p.team_no == self.owner.team_no)
-            {
-                ownerplayers = ownerplayers + 1;
-            }
-            else if (p.team_no != self.owner.team_no && self.owner.team_no != TEAM_NONE)
-            {
-                enemyplayers = enemyplayers + 1;
+                if (p.team_no == TEAM_BLUE)
+                {
+                    blueplayers = blueplayers + 1;
+                }
+                else if (p.team_no == TEAM_RED)
+                {
+                    redplayers = redplayers + 1;
+                }
+                
+                if (p.team_no == self.owner.team_no)
+                {
+                    ownerplayers = ownerplayers + 1;
+                }
+                else if (p.team_no != self.owner.team_no && self.owner.team_no != TEAM_NONE)
+                {
+                    enemyplayers = enemyplayers + 1;
+                }
             }
         }
         
@@ -395,6 +399,7 @@ void trigger_capture_area_Think()
     // check there's enough players
     float teamcapping;
     teamcapping = TEAM_NONE;
+    float cappingplayers = 0;
 
     if (blueplayers >= self.numtocap && redplayers == 0)
     {
@@ -506,9 +511,27 @@ void trigger_capture_area_Think()
     DoCaptureProgress(teamcapping, increase);
 }
 
+
 void trigger_capture_area_Touch()
 {
-    dprint("other touch: ", other.classname);
+    string mer = strcat("other touch: ", other.classname);
+    dprint(mer);
+/*
+    if (other.capnum != self.capnum)
+    {
+        other.capnum = self.capnum;
+        switch (other.team_no)
+        {
+            case TEAM_BLUE:
+                self.blueplayers = self.blueplayers + 1;
+                break;
+            case TEAM_RED:
+                self.redplayers = self.redplayers + 1;
+                break;
+        }
+    }
+*/
+    
 }
 
 void trigger_capture_area()

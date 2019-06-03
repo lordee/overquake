@@ -88,6 +88,15 @@ void() door_hit_bottom =
 	self.state = STATE_BOTTOM;
 };
 
+void () door_go_down_silent = {
+    if (self.max_health) {
+        self.takedamage = 1;
+        self.health = self.max_health;
+    }
+    self.state = STATE_DOWN;
+    SUB_CalcMove(self.pos1, self.speed, door_hit_bottom);
+}
+
 void() door_go_down =
 {
 	sound (self, CHAN_VOICE, self.noise2, 1, ATTN_NORM);
