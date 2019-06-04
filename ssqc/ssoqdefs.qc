@@ -67,6 +67,9 @@
 entity oldself;
 float GameStarted;
 
+// quadmode
+.float roundnum
+
 // cp defs
 .float restrictteamfromwin;
 .float scorestyle;
@@ -91,10 +94,3 @@ float GameStarted;
 .float redmustown1;
 .float redmustown2;
 .float redmustown3;
-
-// quadmode
-float rounds;
-float team1score;
-float team2score;
-float quad_winner;
-float number_of_teams;

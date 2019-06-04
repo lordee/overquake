@@ -1,7 +1,6 @@
 void (vector vid_size) ShowLobbyMenu;
 void (vector vid_size) ShowLobbyChampMenu
 
-float current_menu;
 vector MENU_BG = '0.2 0.3 0.4';
 vector MENU_BG_DARK = '0.1 0.15 0.2';
 vector MENU_BORDER = '0.3 0.4 0.5';
@@ -77,6 +76,7 @@ entity (float btnID) GetButton = {
         
         button = find(button, classname, "gui_button");
     }
+    return world;
 }
 
 entity (string button_text, void () btnMethod, vector button_spawnpos, string button_image, vector button_size, float button_flags, float btnID) CreateButton =

@@ -236,6 +236,11 @@
 #define SCORESTYLE_HOLD 0
 #define SCORESTYLE_TIME 1
 
+// quadmode
+#define QUAD_ROUNDS "2"
+#define QUAD_DELAY_TIME "30"
+#define QUAD_ROUND_TIME "10"
+
 // menus
 #define MNU_INACTIVE 0
 #define MNU_LOBBYTEAM 1

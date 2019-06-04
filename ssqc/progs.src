@@ -24,6 +24,7 @@ champ.qc
 champfrostarcher.qc
 champshambler.qc
 entity-spawn.qc
-entity-controlpoint.qc
+
 
 game.qc
+entity-controlpoint.qc

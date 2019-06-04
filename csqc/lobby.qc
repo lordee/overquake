@@ -131,7 +131,7 @@ void (vector vid_size) ShowLobbyChampMenu = {
 
 	float pad = 8;
 	vector btnpos = [pad, MENU_START_CONTENT];
-	vector btnsize = [(size_x *.2) - (pad * 2), 20]
+	vector btnsize = [(size_x *.2) - (pad * 2), 20];
 	
 	btnpos = ChampButton_Draw(size, CHAMP_FROSTARCHER, "Frost Archer", btnpos, btnsize, pad);
 	btnpos = ChampButton_Draw(size, CHAMP_TRISTANA, "Tristana", btnpos, btnsize, pad);

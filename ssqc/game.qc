@@ -1,5 +1,10 @@
 // TODO - most of this ripped from fortressone/huetf - should rewrite it at some point so it's more logical
 
+// quadmode
+float rounds;
+float team1score;
+float team2score;
+float quad_winner;
 
 void () MatchThink =
 {
@@ -152,7 +157,7 @@ void () QuadRoundThink = {
 			bprint(PRINT_HIGH, " remaining\n");
 		}
 		if (!self.cnt) {
-			if (rounds > 1)
+			if (rounds > 0)
             {
                 local string st;
                 st = infokey(world, "round_delay_time");
@@ -232,12 +237,6 @@ void () QuadRoundInit = {
 	local string num;
 	local entity p;
 
-	if ((number_of_teams < 1))	{
-		self.nextthink = (time + 2);
-		if (self.cnt2 <= 5)
-			self.cnt2 = 10;
-		return;
-	}
 	self.cnt2 = (self.cnt2 - 1);
     if (!self.cnt2)	{
         localcmd("serverinfo status \"0 min left\"\n");
@@ -273,7 +272,8 @@ void () QuadRoundInit = {
 
 void () StartQuadRound =
 {
-	local string st;
+    rounds = (rounds - 1);
+
 	local entity te, te2, p;
 
 	lightstyle(0, "m");
@@ -290,14 +290,15 @@ void () StartQuadRound =
 		p = find(p, classname, "player");
 	}
 
-	if (rounds == 1) {
+// game is over with no rounds left
+	if (rounds == -1) {
 		quad_winner = CheckWinningTeam();
-		if (quad_winner == 0)
-			bprint (2, "Round Drawn!\n");
-		else if (quad_winner == 1)
-			bprint(2, "Blue Team Wins!\n");
-		else if (quad_winner == 2)
-			bprint(2, "Red Team Wins!\n");
+		if (quad_winner == TEAM_NONE)
+			bprint (PRINT_HIGH, "Round Drawn!\n");
+		else if (quad_winner == TEAM_BLUE)
+			bprint(PRINT_HIGH, "Blue Team Wins!\n");
+		else if (quad_winner == TEAM_RED)
+			bprint(PRINT_HIGH, "Red Team Wins!\n");
 
 		p = find (world, classname, "player");
 		while (p != world) {
@@ -314,8 +315,7 @@ void () StartQuadRound =
 		localcmd("stop\n");
 		return;
 	}
-	if (rounds > 1)
-		rounds = (rounds - 1);
+
 	if (intermission_running)
 		return;
 
@@ -330,22 +330,29 @@ void () StartQuadRound =
 	}
 
 	te = find(world, classname, "round");
-    local float rdt;
-    st = infokey(world, "round_delay_time");
-    rdt = stof(st);
-	te.cnt2 = rdt;
-	st = infokey (world, "round_time");
-	te.cnt = stof (st);
-	quad_winner = CheckWinningTeam();
+    if (!te)
+    {
+        te = spawn();
+        te.owner = world;
+        te.classname = "round";
+    }
+    te.cnt2 = GetSetting(world, "round_delay_time", QUAD_DELAY_TIME);
+	te.cnt = GetSetting(world, "round_time", QUAD_ROUND_TIME);
+    te.roundnum = GetSetting(world, "rounds", QUAD_ROUNDS);
+
 	localcmd("serverinfo status Standby\n");
-	if (rounds > 1) {
-		te.think = QuadRoundBegin;
+
+    if (te.roundnum == (rounds+1))
+    {
+        // first round
+        te.think = QuadRoundBegin;
 		te.nextthink = (time + 0.01);
-	}
-	else { // last round?
-		te.think = QuadRoundInit;
+    }
+    else
+    {
+        te.think = QuadRoundInit;
 		te.nextthink = (time + 1);
-	}
+    }
 };
 
 void () EndQuadRound = {
@@ -365,6 +372,17 @@ void () EndQuadRound = {
 		}
 	}
 };
+
+void GameThink()
+{
+    self.nextthink = time + 1;
+    self.cnt2 = self.cnt2 + 1;
+    if (self.cnt2 >= 60)
+    {
+        self.cnt = self.cnt + 1;
+        self.cnt2 = self.cnt2 - 60;
+    }
+}
 
 
 void () LobbyThink = {
@@ -414,8 +432,10 @@ void () LobbyThink = {
         }
     }
     else if (!self.cnt2) {
-        self.nextthink = (time + 0.1);
-        self.think = SUB_Remove;
+        self.cnt = 0;
+        self.cnt2 = 0;
+        self.nextthink = time + 1;
+        self.think = GameThink;
         p = find(world, classname, "player");
         while (p != world) {
             if (p.netname != "") {
@@ -427,8 +447,8 @@ void () LobbyThink = {
         }
         StartQuadRound();
         return;
-        
     }
+
     string num, tmp;
     float fl;
     fl = (self.cnt2 / 60);
@@ -484,6 +504,7 @@ void () LobbyThink = {
             }
             p = find(p, classname, "player");
         }
+
         if (self.cnt2 > 1) {
             bprint(PRINT_HIGH, num, " seconds \n");
         }
@@ -494,4 +515,17 @@ void () LobbyThink = {
     }
 
     self.nextthink = (time + 1);
+}
+
+void GameSpawn()
+{
+    entity te;
+	te = find(world, classname, "gametimer");
+	te = spawn();
+	te.owner = world;
+	te.classname = "gametimer";
+	te.think = LobbyThink;
+	te.nextthink = time + 1;
+	te.cnt2 = 31;
+    rounds = GetSetting(world, "rounds", QUAD_ROUNDS);
 }

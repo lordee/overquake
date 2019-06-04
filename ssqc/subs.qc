@@ -1,4 +1,24 @@
 
+float GetSetting (entity ent, string settingname, string defaultval)
+{
+	string val;
+	val = infokey(ent, settingname);
+	if (!val)
+	{
+		val = defaultval;
+	}
+
+	switch (val)
+	{
+		case "on":
+			return TRUE;
+		case "off":
+			return FALSE;
+		default:
+			return stof(val);
+	}
+}
+
 //In order to make it more useful, this header includes a timeofday function which just grabs the values for you to use in your qc code straight after calling calltimeofday.
 float tod_sec, tod_min, tod_hour, tod_day, tod_mon, tod_year;
 
